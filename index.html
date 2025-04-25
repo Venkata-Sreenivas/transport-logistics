@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Transport Logistics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>:root {
+    --bg-color: #1a1a1a;
+    --card-bg: #212121;
+    --text-color: #f5f5f5;
+    --primary: #d32f2f;
+    --primary-dark: #b71c1c;
+    --nav-bg: #7f0000;
+    --hover-bg: #e53935;
+  }
+
+  body.light-mode {
+    --bg-color: #f4f4f4;
+    --card-bg: #ffffff;
+    --text-color: #333;
+    --primary: #00796b;
+    --primary-dark: #004d40;
+    --nav-bg: #004d40;
+    --hover-bg: #009688;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.5s, color 0.5s;
+    display: flex;
+  }
+
+  .sidebar {
+    width: 220px;
+    background: var(--nav-bg);
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sidebar a {
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background 0.3s;
+  }
+
+  .sidebar a:hover {
+    background-color: var(--hover-bg);
+  }
+
+  .main {
+    margin-left: 240px;
+    flex-grow: 1;
+  }
+
+  header {
+    background-color: var(--primary);
+    padding: 20px;
+    color: white;
+    text-align: center;
+    box-shadow: 0px 5px 15px rgba(255, 0, 0, 0.3);
+  }
+
+  .toggle-btn {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    padding: 5px 12px;
+    background-color: #fff;
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+
+  .container {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.1);
+    transition: transform 0.3s, background 0.5s;
+  }
+
+  .card:hover {
+    transform: scale(1.03);
+  }
+
+  button {
+    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background: var(--primary-dark);
+  }
+
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 160px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -80px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .fade-in {
+    opacity: 0;
+    animation: fadeIn ease 2s;
+    animation-fill-mode: forwards;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+</style></style>
+</head>
+<body>
+  <div class="sidebar">
+    <a href="#home">🏠 Home</a>
+    <a href="#services">🛠️ Services</a>
+    <a href="#tracking">📍 Tracking</a>
+    <a href="#fleet">🚚 Fleet</a>
+    <a href="#support">📞 Support</a>
+  </div>
+
+  <div class="main">
+    <button class="toggle-btn" onclick="toggleTheme()">🌗 Toggle Theme</button>
+    <header>
+      <h1 class="fade-in">🚚 Transport Logistics Dashboard</h1>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <h2>🚛 Fleet Management</h2>
+        <p>Monitor and maintain your fleet efficiently.</p>
+        <button onclick="showMessage('Fleet Management')">Learn More</button>
+      </div>
+
+      <div class="card">
+        <h2>📡 Real-Time Tracking</h2>
+        <p class="tooltip">Track vehicles live<span class="tooltiptext">Updates every 5 seconds</span></p>
+        <button onclick="showMessage('Real-Time Tracking')">Track Now</button>
+      </div>
+
+      <div class="card">
+        <h2>📞 Customer Support</h2>
+        <p>24/7 support for all logistics needs.</p>
+        <button onclick="showMessage('Customer Support')">Contact Us</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="card">
+        <h2>📊 Fleet Overview</h2>
+        <canvas id="fleetChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Update Chart.js dynamically from backend
+    async function updateFleetChart() {
+      const res = await fetch('/api/fleet');
+      const fleet = await res.json();
+  
+      const labels = fleet.map(f => f.type);
+      const data = fleet.map(f => f.count);
+  
+      const ctx = document.getElementById('fleetChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Number of Vehicles',
+            data,
+            backgroundColor: ['#e53935', '#d32f2f', '#b71c1c', '#880e4f']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Fleet Composition' }
+          }
+        }
+      });
+    }
+  
+    updateFleetChart();
+  
+    // Optional: Call support API
+    async function sendSupportRequest(name, message) {
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message })
+      });
+      const result = await res.json();
+      console.log(result);
+    }
+  
+    // Example usage (hook this to a button or form later)
+    // sendSupportRequest("Alex", "Need help with a delivery");
+  </script>
+  
+</body>
+</html>
